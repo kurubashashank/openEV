@@ -21,15 +21,11 @@ COPY . .
 # Create directories
 RUN mkdir -p /app/logs
 
-# Make startup script executable
-RUN chmod +x /app/start.sh
-
 # Set environment variables
-ENV PORT=7860
 ENV PYTHONUNBUFFERED=1
 
-# Expose port (HF Spaces requires port 7860)
+# Expose port
 EXPOSE 7860
 
-# Run the application using startup script
-CMD /app/start.sh
+# Run the application directly with Uvicorn
+CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "7860", "--log-level", "info"]
