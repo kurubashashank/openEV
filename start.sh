@@ -1,11 +1,8 @@
 #!/bin/sh
 set -e
 
-# Log dir
+# Create log directory
 mkdir -p /app/logs
-
-# Redirect all output to log file AND stdout
-exec > >(tee -a /app/logs/startup.log) 2>&1
 
 echo "=== Application Startup at $(date) ==="
 echo "Starting Warehouse Inventory Environment..."
