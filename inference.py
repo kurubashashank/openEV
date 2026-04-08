@@ -29,23 +29,15 @@ logger = logging.getLogger(__name__)
 class WarehouseAgent:
     """Agent that interacts with warehouse environment via OpenEnv API."""
     
-    def __init__(self, api_base_url: str, model_name: str, hf_token: str):
-        """Initialize agent with API configuration."""
-        self.api_base_url = api_base_url.rstrip("/")
+    def __init__(self, env_api_base_url: str, llm_api_base_url: str, model_name: str, api_key: str):
+        """Initialize agent with environment and LLM configuration."""
+        self.api_base_url = env_api_base_url.rstrip("/")
         self.model_name = model_name
-        self.hf_token = hf_token
         
-        # Initialize OpenAI client for LLM (use Hugging Face Inference API)
-        # Note: api_base_url is for warehouse environment, not for LLM
-        # LLM calls go to Hugging Face Inference API or compatible endpoint
-        llm_api_base = os.getenv(
-            "LLM_API_BASE_URL",
-            "https://api-inference.huggingface.co/v1"
-        )
-        
+        # Route all model calls through the injected LiteLLM/OpenAI-compatible proxy.
         self.client = OpenAI(
-            api_key=hf_token,
-            base_url=llm_api_base
+            api_key=api_key,
+            base_url=llm_api_base_url.rstrip("/")
         )
     
     def reset_environment(self, task_id: str) -> Dict:
@@ -283,20 +275,25 @@ Orders will arrive in {self.reorder_lead_time} steps.
 
 def main():
     """Main entry point."""
-    # Get configuration from environment
-    api_base_url = os.getenv("API_BASE_URL", "http://localhost:8000")
+    # Model requests must use the evaluator-provided proxy settings.
+    llm_api_base_url = os.environ["API_BASE_URL"]
+    api_key = os.environ["API_KEY"]
+
+    # The warehouse environment URL is configured separately to avoid
+    # accidentally sending environment HTTP traffic to the LLM proxy.
+    env_api_base_url = os.getenv(
+        "ENV_API_BASE_URL",
+        os.getenv("WAREHOUSE_API_BASE_URL", "http://localhost:8000")
+    )
     model_name = os.getenv("MODEL_NAME", "meta-llama/Llama-2-7b")
-    hf_token = os.getenv("HF_TOKEN", "")
     
     logger.info(f"Starting inference script")
-    logger.info(f"API_BASE_URL: {api_base_url}")
+    logger.info(f"LLM API_BASE_URL: {llm_api_base_url}")
+    logger.info(f"ENV_API_BASE_URL: {env_api_base_url}")
     logger.info(f"MODEL_NAME: {model_name}")
     
-    if not hf_token:
-        logger.warning("HF_TOKEN not set. Using empty token.")
-    
     # Create agent
-    agent = WarehouseAgent(api_base_url, model_name, hf_token)
+    agent = WarehouseAgent(env_api_base_url, llm_api_base_url, model_name, api_key)
     
     # Evaluate tasks
     try:

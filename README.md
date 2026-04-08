@@ -67,6 +67,15 @@ curl -X POST http://localhost:7860/reset -H "Content-Type: application/json" -d 
 - `openenv.yaml`: environment contract
 - `inference.py`: baseline interaction script
 
+## Inference Environment Variables
+
+`inference.py` expects the following environment variables when evaluated:
+
+- `API_BASE_URL`: OpenAI-compatible LiteLLM proxy URL for model calls
+- `API_KEY`: API key for the injected LiteLLM proxy
+- `ENV_API_BASE_URL`: warehouse environment base URL for `/reset` and `/step`
+- `MODEL_NAME`: model identifier exposed by the proxy
+
 ## Verification
 
 - Docker image builds successfully
