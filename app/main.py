@@ -23,23 +23,23 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-# Global environment instance (one per task)
+# Active environment instances keyed by task, plus the most recently reset task.
 environments: Dict[str, WarehouseEnvironment] = {}
-current_task: str = "easy"
+current_task: Optional[str] = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Initialize environments on startup."""
+    global current_task
     logger.info("Starting warehouse environment API")
-    # Initialize with default task
-    environments["easy"] = WarehouseEnvironment(task_id="easy")
-    environments["medium"] = WarehouseEnvironment(task_id="medium")
-    environments["hard"] = WarehouseEnvironment(task_id="hard")
-    
+    environments.clear()
+    current_task = None
     yield
     
     logger.info("Shutting down warehouse environment API")
+    environments.clear()
+    current_task = None
 
 
 app = FastAPI(
@@ -74,15 +74,17 @@ async def reset(request: ResetRequest):
     OpenEnv Spec: Resets the environment and returns initial observation/state.
     """
     try:
+        global current_task
         task_id = request.task_id
-        
-        if task_id not in environments:
+
+        if task_id not in WarehouseEnvironment.TASK_CONFIGS:
             raise ValueError(f"Unknown task_id: {task_id}")
-        
-        # Create fresh environment for this task
+
+        # Create a fresh environment and make it the active task.
         env = WarehouseEnvironment(task_id=task_id, seed=request.seed)
         environments[task_id] = env
-        
+        current_task = task_id
+
         initial_state = env.reset()
         
         logger.info(f"Environment reset for task: {task_id}")
@@ -105,7 +107,9 @@ async def step(request: StepRequest):
     OpenEnv Spec: Takes action, returns (observation, reward, done, info).
     """
     try:
-        # Get current environment (default to easy if not reset)
+        if current_task is None:
+            raise ValueError("Environment not initialized. Call /reset first.")
+
         env = environments.get(current_task)
         if env is None:
             raise ValueError("Environment not initialized. Call /reset first.")
@@ -150,6 +154,9 @@ async def get_state():
     OpenEnv Spec: Returns current observation/state without stepping.
     """
     try:
+        if current_task is None:
+            raise ValueError("Environment not initialized. Call /reset first.")
+
         env = environments.get(current_task)
         if env is None:
             raise ValueError("Environment not initialized. Call /reset first.")

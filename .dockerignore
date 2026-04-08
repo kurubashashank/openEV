@@ -1,0 +1,11 @@
+.git
+.gitignore
+.pytest_cache
+__pycache__/
+*/__pycache__/
+pytest-cache-files-*/
+tests/
+*.pyc
+*.pyo
+*.pyd
+*.log
