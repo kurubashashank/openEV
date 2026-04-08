@@ -67,7 +67,7 @@ async def health():
 
 
 @app.post("/reset", response_model=ResetResponse)
-async def reset(request: ResetRequest):
+async def reset(request: Optional[ResetRequest] = None):
     """
     Reset environment to initial state.
     
@@ -75,13 +75,14 @@ async def reset(request: ResetRequest):
     """
     try:
         global current_task
-        task_id = request.task_id
+        reset_request = request or ResetRequest()
+        task_id = reset_request.task_id
 
         if task_id not in WarehouseEnvironment.TASK_CONFIGS:
             raise ValueError(f"Unknown task_id: {task_id}")
 
         # Create a fresh environment and make it the active task.
-        env = WarehouseEnvironment(task_id=task_id, seed=request.seed)
+        env = WarehouseEnvironment(task_id=task_id, seed=reset_request.seed)
         environments[task_id] = env
         current_task = task_id
 

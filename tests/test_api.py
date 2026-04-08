@@ -30,6 +30,16 @@ def test_reset_allows_medium_task_and_sets_active_environment():
     assert step_payload["state"]["current_step"] == 1
 
 
+def test_reset_accepts_empty_body_and_defaults_to_easy():
+    with TestClient(app) as client:
+        response = client.post("/reset")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["task_id"] == "easy"
+    assert len(payload["state"]["inventory_levels"]) == 1
+
+
 def test_step_requires_reset_before_use():
     with TestClient(app) as client:
         response = client.post("/step", json={"action": {"order_quantities": [10]}})
