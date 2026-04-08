@@ -8,11 +8,23 @@ pinned: false
 license: openrail
 ---
 
-# Warehouse Inventory Environment
+# Warehouse Inventory Environment for OpenEnv
 
-Dockerized FastAPI environment for warehouse inventory control tasks. The API
-implements the core OpenEnv loop with `/reset`, `/step`, `/state`, `/grade`,
-and `/health` endpoints.
+Submission-ready Dockerized FastAPI environment for warehouse inventory control.
+The API implements the OpenEnv loop with `/reset`, `/step`, `/state`, `/grade`,
+and `/health`.
+
+## Submission Links
+
+- Live Space: `https://shashank84-meta-ai.hf.space`
+- Hugging Face repo: `https://hf.co/spaces/Shashank84/Meta_ai`
+- GitHub repo: `https://github.com/kurubashashank/openEV`
+
+## Overview
+
+This environment simulates multi-product inventory control under uncertain
+demand. An agent chooses replenishment quantities while balancing holding costs
+against stockout penalties across three task difficulties.
 
 ## Tasks
 
