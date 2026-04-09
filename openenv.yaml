@@ -85,8 +85,8 @@ tasks:
 
 reward:
   type: "float"
-  range: [0.0, 1.0]
-  description: "Normalized reward based on inventory efficiency (minimize costs and stockouts)"
+  range: [0.0001, 0.9999]
+  description: "Normalized reward based on inventory efficiency, always strictly between 0.0 and 1.0"
 
 defs:
   ResetRequest:
@@ -154,8 +154,8 @@ defs:
         $ref: "#/$defs/State"
       reward:
         type: "number"
-        minimum: 0.0
-        maximum: 1.0
+        exclusiveMinimum: 0.0
+        exclusiveMaximum: 1.0
       done:
         type: "boolean"
       info:

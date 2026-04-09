@@ -99,9 +99,9 @@ class StepResponse(BaseModel):
     state: State
     reward: float = Field(
         ...,
-        ge=0.0,
-        le=1.0,
-        description="Cumulative normalized reward (0.0 to 1.0)"
+        gt=0.0,
+        lt=1.0,
+        description="Cumulative normalized reward strictly between 0.0 and 1.0"
     )
     done: bool = Field(
         ...,
@@ -131,9 +131,9 @@ class TaskGradeResponse(BaseModel):
     num_episodes: int
     average_reward: float = Field(
         ...,
-        ge=0.0,
-        le=1.0,
-        description="Average reward across episodes"
+        gt=0.0,
+        lt=1.0,
+        description="Average reward across episodes, strictly between 0.0 and 1.0"
     )
     episode_rewards: List[float] = Field(
         ...,
