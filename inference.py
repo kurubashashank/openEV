@@ -25,6 +25,13 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+SCORE_EPSILON = 1e-4
+
+
+def clamp_score(value: float) -> float:
+    """Keep reported scores strictly inside (0, 1)."""
+    return max(SCORE_EPSILON, min(1.0 - SCORE_EPSILON, float(value)))
+
 
 class WarehouseAgent:
     """Agent that interacts with warehouse environment via OpenEnv API."""
@@ -265,7 +272,7 @@ Orders will arrive in {self.reorder_lead_time} steps.
             step_response = self.step_environment({"action": {"order_quantities": action}})
             
             state = step_response['state']
-            reward = step_response['reward']
+            reward = clamp_score(step_response['reward'])
             done = step_response['done']
             info = step_response['info']
             
@@ -280,17 +287,19 @@ Orders will arrive in {self.reorder_lead_time} steps.
             
             logger.info(
                 f"Episode {episode_num}, Step {step_num}: "
-                f"reward={reward:.4f}, done={done}"
+                f"reward={reward:.6f}, done={done}"
             )
         
         # [END] block
+        total_reward = clamp_score(total_reward)
+        average_step_reward = clamp_score(total_reward / max(1, step_num))
         print(f"[END]")
         print(json.dumps({
             "episode": episode_num,
             "task_id": task_id,
             "total_steps": step_num,
             "total_reward": total_reward,
-            "average_step_reward": total_reward / max(1, step_num),
+            "average_step_reward": average_step_reward,
             "timestamp": datetime.now().isoformat(),
             "status": "completed"
         }))
@@ -323,13 +332,16 @@ Orders will arrive in {self.reorder_lead_time} steps.
                 
                 try:
                     result = self.run_episode(task_id, episode_num)
-                    task_rewards.append(result['total_reward'])
+                    task_rewards.append(clamp_score(result['total_reward']))
                     task_episodes.append(result)
                 except Exception as e:
                     logger.error(f"Episode failed: {e}")
-                    task_rewards.append(0.0)
+                    task_rewards.append(SCORE_EPSILON)
             
-            avg_reward = sum(task_rewards) / len(task_rewards) if task_rewards else 0.0
+            avg_reward = (
+                clamp_score(sum(task_rewards) / len(task_rewards))
+                if task_rewards else SCORE_EPSILON
+            )
             
             all_results[task_id] = {
                 "task_id": task_id,
@@ -339,7 +351,7 @@ Orders will arrive in {self.reorder_lead_time} steps.
                 "episodes_data": task_episodes
             }
             
-            logger.info(f"Task {task_id} complete. Average reward: {avg_reward:.4f}")
+            logger.info(f"Task {task_id} complete. Average reward: {avg_reward:.6f}")
         
         return all_results
 
@@ -385,8 +397,8 @@ def main():
         for task_id, task_results in results.items():
             print(f"\n{task_id.upper()}")
             print(f"  Episodes: {task_results['episodes']}")
-            print(f"  Rewards: {[f'{r:.4f}' for r in task_results['rewards']]}")
-            print(f"  Average Reward: {task_results['average_reward']:.4f}")
+            print(f"  Rewards: {[f'{r:.6f}' for r in task_results['rewards']]}")
+            print(f"  Average Reward: {task_results['average_reward']:.6f}")
         
         return 0
     
