@@ -240,7 +240,7 @@ Orders will arrive in {self.reorder_lead_time} steps.
             2 if task_id == "medium" else 3
         )
         
-        total_reward = 0.0
+        total_reward = SCORE_EPSILON
         step_num = 0
         episode_results = []
         

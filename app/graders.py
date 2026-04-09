@@ -26,7 +26,7 @@ class TaskGrader:
             seed: Random seed
             
         Returns:
-            Episode reward (0.0 to 1.0)
+            Episode reward strictly between 0.0 and 1.0
         """
         env = WarehouseEnvironment(task_id=task_id, seed=seed)
         state = env.reset()
@@ -34,7 +34,7 @@ class TaskGrader:
         if policy_fn is None:
             policy_fn = TaskGrader.random_policy
         
-        total_reward = 0.0
+        total_reward = WarehouseEnvironment.SCORE_EPSILON
         episode_length = 0
         
         done = False

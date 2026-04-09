@@ -32,7 +32,7 @@ against stockout penalties across three task difficulties.
 - `medium`: 3 products, 100 steps
 - `hard`: 5 products, 150 steps
 
-The reward is normalized to the range `[0.0, 1.0]` and penalizes both excess
+The reward is normalized to stay strictly within `(0.0, 1.0)` and penalizes both excess
 inventory holding and stockouts.
 
 ## Local Run

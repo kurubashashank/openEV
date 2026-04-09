@@ -221,7 +221,7 @@ async def info():
         "action_space": {
             "order_quantities": "array of non-negative integers"
         },
-        "reward": "float in range [0.0, 1.0]"
+        "reward": "float strictly between 0.0 and 1.0"
     }
 
 
