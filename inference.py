@@ -39,6 +39,7 @@ class WarehouseAgent:
             api_key=api_key,
             base_url=llm_api_base_url.rstrip("/")
         )
+        self._proxy_verified = False
     
     def reset_environment(self, task_id: str) -> Dict:
         """Reset environment and get initial state."""
@@ -83,43 +84,64 @@ Orders will arrive in {self.reorder_lead_time} steps.
         
         prompt = state_description
         
+        response = self.client.chat.completions.create(
+            model=self.model_name,
+            messages=[
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ],
+            temperature=0.3,
+            max_tokens=200,
+            top_p=0.9
+        )
+        self._proxy_verified = True
+        
+        response_text = response.choices[0].message.content.strip()
+        
+        # Parse JSON response
+        # Try to extract JSON from response
+        import json
+        if "```json" in response_text:
+            json_str = response_text.split("```json")[1].split("```")[0].strip()
+        elif "```" in response_text:
+            json_str = response_text.split("```")[1].split("```")[0].strip()
+        else:
+            json_str = response_text
+        
         try:
-            response = self.client.chat.completions.create(
-                model=self.model_name,
-                messages=[
-                    {
-                        "role": "user",
-                        "content": prompt
-                    }
-                ],
-                temperature=0.3,
-                max_tokens=200,
-                top_p=0.9
-            )
-            
-            response_text = response.choices[0].message.content.strip()
-            
-            # Parse JSON response
-            # Try to extract JSON from response
-            import json
-            if "```json" in response_text:
-                json_str = response_text.split("```json")[1].split("```")[0].strip()
-            elif "```" in response_text:
-                json_str = response_text.split("```")[1].split("```")[0].strip()
-            else:
-                json_str = response_text
-            
             action_data = json.loads(json_str)
             order_quantities = action_data.get("order_quantities", [0] * len(state['demand_forecast']))
             
             # Ensure non-negative integers
             order_quantities = [max(0, int(q)) for q in order_quantities]
-            
             return order_quantities
-        
         except Exception as e:
-            logger.warning(f"LLM action generation failed: {e}. Using forecast policy.")
+            logger.warning(f"LLM output was not valid JSON: {e}. Using forecast policy.")
             return self.forecast_policy(state)
+
+    def verify_llm_proxy(self) -> None:
+        """Fail fast unless we can complete at least one proxy-backed LLM call."""
+        response = self.client.chat.completions.create(
+            model=self.model_name,
+            messages=[
+                {
+                    "role": "user",
+                    "content": (
+                        "Reply with exactly this JSON and nothing else: "
+                        "{\"order_quantities\": [0]}"
+                    ),
+                }
+            ],
+            temperature=0.0,
+            max_tokens=32,
+        )
+        self._proxy_verified = True
+        logger.info(
+            "Verified LLM proxy call succeeded using model response id=%s",
+            getattr(response, "id", "unknown"),
+        )
     
     def forecast_policy(self, state: Dict) -> List[int]:
         """
@@ -294,6 +316,7 @@ def main():
     
     # Create agent
     agent = WarehouseAgent(env_api_base_url, llm_api_base_url, model_name, api_key)
+    agent.verify_llm_proxy()
     
     # Evaluate tasks
     try:
