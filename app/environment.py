@@ -24,6 +24,8 @@ class TaskConfig:
 
 class WarehouseEnvironment:
     """Warehouse inventory management environment."""
+
+    SCORE_EPSILON = 1e-6
     
     # Task configurations
     TASK_CONFIGS = {
@@ -135,6 +137,11 @@ class WarehouseEnvironment:
         if forecast_step >= len(self.demand_sequence):
             return list(self.config.demand_mean)
         return self.demand_sequence[forecast_step]
+
+    @classmethod
+    def normalize_score(cls, raw_score: float) -> float:
+        """Keep all externally visible scores strictly inside (0, 1)."""
+        return max(cls.SCORE_EPSILON, min(1.0 - cls.SCORE_EPSILON, raw_score))
     
     def step(self, order_quantities: List[int]) -> Tuple[Dict, float, bool, Dict]:
         """
@@ -203,6 +210,7 @@ class WarehouseEnvironment:
             sum(current_demand) * self.config.stockout_penalty_per_unit
         )
         step_reward = 1.0 - (step_cost / max_cost if max_cost > 0 else 0.0)
+        step_reward = self.normalize_score(step_reward)
         
         # Calculate cumulative normalized reward
         total_cost = self.holding_cost_accumulated + self.stockout_penalty_accumulated
@@ -210,7 +218,7 @@ class WarehouseEnvironment:
         cumulative_reward = 1.0 - (
             total_cost / max_accumulated_cost if max_accumulated_cost > 0 else 0.0
         )
-        cumulative_reward = max(0.0, min(1.0, cumulative_reward))
+        cumulative_reward = self.normalize_score(cumulative_reward)
         
         self.current_step += 1
         self.step_count += 1
