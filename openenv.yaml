@@ -71,17 +71,17 @@ tasks:
   - id: "easy"
     name: "Easy Inventory Management"
     description: "Single warehouse, single product, stable demand with low variance"
-    difficulty: "1"
+    difficulty: 0.2
     
   - id: "medium"
     name: "Medium Inventory Management"
     description: "Single warehouse, three products, seasonal demand patterns"
-    difficulty: "2"
+    difficulty: 0.5
     
   - id: "hard"
     name: "Hard Inventory Management"
     description: "Multiple locations, multiple products, volatile demand with supply constraints"
-    difficulty: "3"
+    difficulty: 0.8
 
 reward:
   type: "float"
