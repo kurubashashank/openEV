@@ -16,3 +16,11 @@ def test_openenv_grading_score_range_is_strict():
     minimum, maximum = spec["grading"]["score_range"]
     assert 0.0 < minimum < 1.0
     assert 0.0 < maximum < 1.0
+
+
+def test_openenv_declares_grade_endpoint():
+    spec = yaml.safe_load(Path("openenv.yaml").read_text())
+
+    grade_endpoint = spec["api"]["endpoints"]["grade"]
+    assert grade_endpoint["method"] == "POST"
+    assert grade_endpoint["path"] == "/grade"

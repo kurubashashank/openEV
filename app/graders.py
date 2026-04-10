@@ -114,14 +114,18 @@ class TaskGrader:
             episode_seed = (
                 seed + episode_idx if seed is not None else None
             )
-            reward = TaskGrader.run_episode(
+            reward = WarehouseEnvironment.normalize_score(
+                TaskGrader.run_episode(
                 task_id=task_id,
                 policy_fn=policy_fn,
                 seed=episode_seed
             )
+            )
             episode_rewards.append(reward)
         
-        average_reward = sum(episode_rewards) / len(episode_rewards)
+        average_reward = WarehouseEnvironment.normalize_score(
+            sum(episode_rewards) / len(episode_rewards)
+        )
         
         # Grading rubric: pass if average reward > 0.5
         grade = "PASS" if average_reward > 0.5 else "FAIL"

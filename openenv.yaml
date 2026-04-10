@@ -36,6 +36,11 @@ api:
       method: GET
       path: /tasks
       response_model: TaskListResponse
+    grade:
+      method: POST
+      path: /grade
+      request_model: TaskGradeRequest
+      response_model: TaskGradeResponse
 
 tasks:
   - id: easy

@@ -3,8 +3,11 @@ Pydantic models for OpenEnv warehouse environment.
 Provides type safety and request/response validation.
 """
 
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Annotated
 from pydantic import BaseModel, Field
+
+
+StrictScore = Annotated[float, Field(gt=0.0, lt=1.0)]
 
 
 class Action(BaseModel):
@@ -96,9 +99,9 @@ class CostInfo(BaseModel):
 
 class StepInfo(BaseModel):
     """Additional information from a step."""
-    step_reward: float = Field(
+    step_reward: StrictScore = Field(
         ...,
-        description="Reward for this step"
+        description="Reward for this step, strictly between 0.0 and 1.0"
     )
     costs: CostInfo
     demand_satisfied: List[bool] = Field(
@@ -110,10 +113,8 @@ class StepInfo(BaseModel):
 class StepResponse(BaseModel):
     """Response from step endpoint."""
     state: State
-    reward: float = Field(
+    reward: StrictScore = Field(
         ...,
-        gt=0.0,
-        lt=1.0,
         description="Cumulative normalized reward strictly between 0.0 and 1.0"
     )
     done: bool = Field(
@@ -142,15 +143,13 @@ class TaskGradeResponse(BaseModel):
     """Response from task grader."""
     task_id: str
     num_episodes: int
-    average_reward: float = Field(
+    average_reward: StrictScore = Field(
         ...,
-        gt=0.0,
-        lt=1.0,
         description="Average reward across episodes, strictly between 0.0 and 1.0"
     )
-    episode_rewards: List[float] = Field(
+    episode_rewards: List[StrictScore] = Field(
         ...,
-        description="Reward for each episode"
+        description="Reward for each episode, each strictly between 0.0 and 1.0"
     )
     grade: str = Field(
         ...,
