@@ -10,7 +10,8 @@ import logging
 
 from app.models import (
     ResetRequest, ResetResponse, StepRequest, StepResponse,
-    State, Action, StepInfo, CostInfo, TaskGradeRequest, TaskGradeResponse
+    State, Action, StepInfo, CostInfo, TaskGradeRequest, TaskGradeResponse,
+    TaskInfo, TaskListResponse
 )
 from app.environment import WarehouseEnvironment
 from app.graders import TaskGrader
@@ -168,6 +169,33 @@ async def get_state():
     except Exception as e:
         logger.error(f"Error in get_state: {str(e)}")
         raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.get("/tasks", response_model=TaskListResponse)
+async def list_tasks():
+    """Return task metadata in a validator-friendly format."""
+    return TaskListResponse(
+        tasks=[
+            TaskInfo(
+                id="easy",
+                difficulty="easy",
+                description="Single warehouse, single product, stable demand with low variance",
+                reset_params={"task_id": "easy"},
+            ),
+            TaskInfo(
+                id="medium",
+                difficulty="medium",
+                description="Single warehouse, three products, seasonal demand patterns",
+                reset_params={"task_id": "medium"},
+            ),
+            TaskInfo(
+                id="hard",
+                difficulty="hard",
+                description="Multiple locations, multiple products, volatile demand with supply constraints",
+                reset_params={"task_id": "hard"},
+            ),
+        ]
+    )
 
 
 @app.post("/grade", response_model=TaskGradeResponse)

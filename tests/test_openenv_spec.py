@@ -3,8 +3,16 @@ from pathlib import Path
 import yaml
 
 
-def test_openenv_task_difficulties_are_strictly_in_range():
+def test_openenv_task_difficulties_use_standard_labels():
     spec = yaml.safe_load(Path("openenv.yaml").read_text())
 
     difficulties = [task["difficulty"] for task in spec["tasks"]]
-    assert all(0.0 < difficulty < 1.0 for difficulty in difficulties)
+    assert difficulties == ["easy", "medium", "hard"]
+
+
+def test_openenv_grading_score_range_is_strict():
+    spec = yaml.safe_load(Path("openenv.yaml").read_text())
+
+    minimum, maximum = spec["grading"]["score_range"]
+    assert 0.0 < minimum < 1.0
+    assert 0.0 < maximum < 1.0

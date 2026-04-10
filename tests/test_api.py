@@ -40,6 +40,16 @@ def test_reset_accepts_empty_body_and_defaults_to_easy():
     assert len(payload["state"]["inventory_levels"]) == 1
 
 
+def test_tasks_endpoint_returns_normalized_task_metadata():
+    with TestClient(app) as client:
+        response = client.get("/tasks")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert [task["id"] for task in payload["tasks"]] == ["easy", "medium", "hard"]
+    assert [task["difficulty"] for task in payload["tasks"]] == ["easy", "medium", "hard"]
+
+
 def test_step_requires_reset_before_use():
     with TestClient(app) as client:
         response = client.post("/step", json={"action": {"order_quantities": [10]}})

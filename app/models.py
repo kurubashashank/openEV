@@ -61,6 +61,19 @@ class ResetResponse(BaseModel):
     task_id: str
 
 
+class TaskInfo(BaseModel):
+    """Task metadata exposed for validators and clients."""
+    id: str
+    difficulty: str
+    description: str
+    reset_params: Dict[str, str]
+
+
+class TaskListResponse(BaseModel):
+    """List of available tasks."""
+    tasks: List[TaskInfo]
+
+
 class StepRequest(BaseModel):
     """Request for one environment step."""
     action: Action = Field(

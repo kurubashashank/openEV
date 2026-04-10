@@ -1,176 +1,102 @@
-version: "1.0"
-name: "warehouse-inventory-env"
-description: "Warehouse inventory management optimization environment for AI agents"
-author: "MetaAI"
-license: "MIT"
+name: warehouse-inventory-env
+version: 1.0.0
+description: >
+  OpenEnv warehouse inventory management environment with three task
+  difficulties and normalized reward signals.
+author: MetaAI
+license: MIT
+tags:
+  - openenv
+  - warehouse
+  - inventory
+  - operations
+  - forecasting
 
-environment:
-  name: "WarehouseInventoryEnv"
-  description: "Multi-product warehouse inventory management with demand forecasting"
-  
 api:
-  version: "1.0"
+  base_url: /
   endpoints:
-    - path: "/reset"
-      method: "POST"
-      description: "Reset environment to initial state"
-      request_schema: "$defs/ResetRequest"
-      response_schema: "$defs/ResetResponse"
-    
-    - path: "/step"
-      method: "POST"
-      description: "Execute one step in the environment"
-      request_schema: "$defs/StepRequest"
-      response_schema: "$defs/StepResponse"
-    
-    - path: "/state"
-      method: "GET"
-      description: "Get current environment state"
-      response_schema: "$defs/State"
-
-observation_space:
-  type: "object"
-  properties:
-    inventory_levels:
-      type: "array"
-      description: "Current inventory level for each product"
-      items:
-        type: "integer"
-    pending_orders:
-      type: "array"
-      description: "Pending order quantities for each product"
-      items:
-        type: "integer"
-    demand_forecast:
-      type: "array"
-      description: "Forecasted demand for next period for each product"
-      items:
-        type: "integer"
-    current_step:
-      type: "integer"
-      description: "Current time step"
-    holding_cost_accumulated:
-      type: "number"
-      description: "Accumulated holding costs"
-    stockout_penalty_accumulated:
-      type: "number"
-      description: "Accumulated stockout penalties"
-
-action_space:
-  type: "object"
-  description: "Agent action (order quantities)"
-  properties:
-    order_quantities:
-      type: "array"
-      description: "Order quantity for each product"
-      items:
-        type: "integer"
-        minimum: 0
+    health:
+      method: GET
+      path: /health
+    reset:
+      method: POST
+      path: /reset
+      request_model: ResetRequest
+      response_model: ResetResponse
+    step:
+      method: POST
+      path: /step
+      request_model: StepRequest
+      response_model: StepResponse
+    state:
+      method: GET
+      path: /state
+      response_model: State
+    tasks:
+      method: GET
+      path: /tasks
+      response_model: TaskListResponse
 
 tasks:
-  - id: "easy"
-    name: "Easy Inventory Management"
-    description: "Single warehouse, single product, stable demand with low variance"
-    difficulty: 0.2
-    
-  - id: "medium"
-    name: "Medium Inventory Management"
-    description: "Single warehouse, three products, seasonal demand patterns"
-    difficulty: 0.5
-    
-  - id: "hard"
-    name: "Hard Inventory Management"
-    description: "Multiple locations, multiple products, volatile demand with supply constraints"
-    difficulty: 0.8
+  - id: easy
+    difficulty: easy
+    description: Single warehouse, single product, stable demand with low variance
+    reset_params:
+      task_id: easy
+
+  - id: medium
+    difficulty: medium
+    description: Single warehouse, three products, seasonal demand patterns
+    reset_params:
+      task_id: medium
+
+  - id: hard
+    difficulty: hard
+    description: Multiple locations, multiple products, volatile demand with supply constraints
+    reset_params:
+      task_id: hard
+
+action_space:
+  type: object
+  properties:
+    order_quantities:
+      type: array
+      items:
+        type: integer
+        minimum: 0
+  required:
+    - order_quantities
+
+observation_space:
+  type: object
+  properties:
+    inventory_levels:
+      type: array
+      items:
+        type: integer
+    pending_orders:
+      type: array
+      items:
+        type: integer
+    demand_forecast:
+      type: array
+      items:
+        type: integer
+    current_step:
+      type: integer
+    holding_cost_accumulated:
+      type: number
+    stockout_penalty_accumulated:
+      type: number
 
 reward:
-  type: "float"
-  range: [0.0001, 0.9999]
-  description: "Normalized reward based on inventory efficiency, always strictly between 0.0 and 1.0"
+  min: 0.0001
+  max: 0.9999
+  description: >
+    Normalized reward signal that always stays strictly within (0, 1).
 
-defs:
-  ResetRequest:
-    type: "object"
-    properties:
-      task_id:
-        type: "string"
-        enum: ["easy", "medium", "hard"]
-      seed:
-        type: "integer"
-        nullable: true
-        description: "Random seed for reproducibility"
-  
-  ResetResponse:
-    type: "object"
-    properties:
-      state:
-        $ref: "#/$defs/State"
-      task_id:
-        type: "string"
-  
-  State:
-    type: "object"
-    properties:
-      inventory_levels:
-        type: "array"
-        items:
-          type: "integer"
-      pending_orders:
-        type: "array"
-        items:
-          type: "integer"
-      demand_forecast:
-        type: "array"
-        items:
-          type: "integer"
-      current_step:
-        type: "integer"
-      holding_cost_accumulated:
-        type: "number"
-      stockout_penalty_accumulated:
-        type: "number"
-  
-  StepRequest:
-    type: "object"
-    required:
-      - action
-    properties:
-      action:
-        $ref: "#/$defs/Action"
-  
-  Action:
-    type: "object"
-    properties:
-      order_quantities:
-        type: "array"
-        items:
-          type: "integer"
-          minimum: 0
-  
-  StepResponse:
-    type: "object"
-    properties:
-      state:
-        $ref: "#/$defs/State"
-      reward:
-        type: "number"
-        exclusiveMinimum: 0.0
-        exclusiveMaximum: 1.0
-      done:
-        type: "boolean"
-      info:
-        type: "object"
-        properties:
-          step_reward:
-            type: "number"
-          costs:
-            type: "object"
-            properties:
-              holding_cost:
-                type: "number"
-              stockout_penalty:
-                type: "number"
-          demand_satisfied:
-            type: "array"
-            items:
-              type: "boolean"
+grading:
+  score_range: [0.0001, 0.9999]
+  passing_threshold: 0.6
+  metrics:
+    - normalized_reward
